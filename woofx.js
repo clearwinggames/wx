@@ -85,9 +85,18 @@ Image.prototype.moveRightFive = function () {
     this.moveRightBy(5);
 };
 Image.prototype.gravityTick = function() { 
-    this.moveDownBy(this.momentumY); // ??
-    //this.y -= this.momentumY;
-    this.momentumY += this.accelerationDueToGravity;
+    
+    let futurePosition = this.project(0, this.momentumY);
+
+    if (futurePosition.collideAny(worldObjects)) {
+         this.momentumY = 0;
+    }
+    else 
+    {    
+        this.moveDownBy(this.momentumY); // ??
+        //this.y -= this.momentumY;
+        this.momentumY += this.accelerationDueToGravity;
+    }
 };
 Image.prototype.assignGravity = function() {
   var grav = new scriptBlock(this, [new scriptInstance('actor.gravityTick()', 5)], 15, true).execute();  
