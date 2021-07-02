@@ -1,3 +1,15 @@
+/*
+  This is a custom js library providing next-level functionality for the base woofjs framework
+  This is free use and free to copy and modify to use for something else
+  It's meant to provide inherent support for scenes and world-scrolling / collision, (+gravity/acceleration due to gravity),
+  as well as attaching scripts to woof objects to be run periodically (customizable).  Also UI buttons for easy user interfaces
+  It's for 2D games only as WoofJS only supports 2D games.  It's also unfinished and offered without warranty, use at your own risk.
+  It should (potentially) be helpful/useful for both sidescroller/platformer style games and also overhead perspective like rpgs
+  ---
+  Created in 2021 by Kevin Phillips, not affiliated (in this case) with any particular organization.
+  ---
+*/
+
 var woofStack = [];
 
 var worldObjects = [];
@@ -15,12 +27,35 @@ function changeScene(newSceneNumber) {
    targetScene = newSceneNumber;
     activeScene().worldStack.forEach(wo => { wo.show(); });
 }
-function moveWorld(yamt, xamt) {
+function collideAnySets(newCoords) {
     if (sceneStack.length == 0) {
-    worldObjects.forEach(wo => {        
-        wo.x += xamt;
-        wo.y += yamt;
-    });
+        worldObjects.forEach(wo => {        
+            if (wo.isCorporeal == true) {
+                if (wo.touching(newCoords)) {
+                    return true;
+                }
+            }
+        });
+    }
+    else {
+      activeScene().worldStack.forEach(wo => {
+            if (wo.isCorporeal == true) {
+                if (wo.touching(newCoords)) {
+                    return true;
+                }
+            }
+      });
+    }
+}
+function moveWorld(yamt, xamt) {
+    if (collideAnySets(worldMover.project(-yamt, -xamt)))
+       return;
+        
+    if (sceneStack.length == 0) {
+        worldObjects.forEach(wo => {        
+            wo.x += xamt;
+            wo.y += yamt;
+        });
     }
     else {
       activeScene().worldStack.forEach(wo => {
@@ -101,7 +136,17 @@ Image.prototype.gravityTick = function() {
 Image.prototype.assignGravity = function() {
   var grav = new scriptBlock(this, [new scriptInstance('actor.gravityTick()', 5)], 15, true).execute();  
 };
+
+Image.prototype.isCorporeal = false;
+
 Image.prototype.makeWorldObject = function() {
+  this.isCorporeal = true;
+  if (sceneStack.length == 0) 
+      worldObjects.push(this);  
+  else
+      activeScene().worldStack.push(this);
+};
+Image.prototype.makeWorldBG = function() {
   if (sceneStack.length == 0) 
       worldObjects.push(this);  
   else
@@ -109,6 +154,7 @@ Image.prototype.makeWorldObject = function() {
 };
 Image.prototype.makeWorldMover = function() {
     worldMover = this;
+    this.isCorporeal = true;
 };
 
 Image.prototype.momentumY = 0;
